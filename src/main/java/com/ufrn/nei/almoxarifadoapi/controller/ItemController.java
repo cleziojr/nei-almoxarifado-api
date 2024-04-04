@@ -3,13 +3,18 @@ package com.ufrn.nei.almoxarifadoapi.controller;
 import java.util.List;
 
 import com.ufrn.nei.almoxarifadoapi.dto.item.ItemDeleteDTO;
+import com.ufrn.nei.almoxarifadoapi.entity.ItemEntity;
 import com.ufrn.nei.almoxarifadoapi.infra.RestErrorMessage;
+import com.ufrn.nei.almoxarifadoapi.repository.ItemRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +33,11 @@ import jakarta.validation.Valid;
 @RequestMapping("api/v1/itens")
 public class ItemController {
         @Autowired
-        private ItemService itemService;
+        private final ItemService itemService;
+
+        public ItemController(ItemService itemService) {
+                this.itemService = itemService;
+        }
 
         @Operation(summary = "Buscar todos os itens", description = "Listará todos os itens cadastrados", responses = {
                         @ApiResponse(responseCode = "200", description = "Itens encontrados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ItemResponseDTO.class)))
@@ -40,6 +49,14 @@ public class ItemController {
 
                 return ResponseEntity.status(HttpStatus.OK).body(items);
         }
+
+        @Operation
+        @GetMapping("/{itens}")
+        public Page<ItemEntity> getAllItems(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
+                Pageable pageable = PageRequest.of(page, size);
+                return ItemRepository.getAllItems(pageable);
+        }
+
 
         @Operation(summary = "Buscar itens pelo ID.", description = "Listará o item encontrado com o ID informado.", responses = {
                         @ApiResponse(responseCode = "200", description = "Item encontrado com sucesso.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ItemResponseDTO.class))),
@@ -57,6 +74,7 @@ public class ItemController {
                         @ApiResponse(responseCode = "201", description = "Item cadastrado com sucesso.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ItemResponseDTO.class))),
                         @ApiResponse(responseCode = "400", description = "Não foi possível cadastrar o item.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestErrorMessage.class)))
         })
+
         @PostMapping
         @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<ItemResponseDTO> createItem(@RequestBody @Valid ItemCreateDTO itemDTO) {

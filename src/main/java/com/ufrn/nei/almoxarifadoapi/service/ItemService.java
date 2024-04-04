@@ -24,7 +24,11 @@ import jakarta.transaction.Transactional;
 @Service
 public class ItemService {
     @Autowired
-    private ItemRepository itemRepository;
+    private final ItemRepository itemRepository;
+
+    public ItemService(ItemRepository itemRepository) {
+        this.itemRepository = itemRepository;
+    }
 
     @Transactional
     public List<ItemResponseDTO> findAllItems() {
